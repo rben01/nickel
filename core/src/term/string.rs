@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use compact_str::CompactString;
+use compact_str::{CompactString, ToCompactString};
 use malachite::Rational;
 use serde::{Deserialize, Serialize};
 use unicode_segmentation::UnicodeSegmentation;
@@ -26,7 +26,6 @@ where
 
 impl From<&Ident> for NickelString {
     fn from(ident: &Ident) -> Self {
-        use compact_str::ToCompactString;
         Self(ident.to_compact_string())
     }
 }

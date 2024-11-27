@@ -625,7 +625,7 @@ impl NickelDocBuilderExt for DocBuilder<'_, Allocator> {
 
 impl<'a> Pretty<'a, Allocator> for LocIdent {
     fn pretty(self, allocator: &'a Allocator) -> DocBuilder<'a, Allocator> {
-        allocator.text(self.into_label())
+        allocator.text(self.label())
     }
 }
 

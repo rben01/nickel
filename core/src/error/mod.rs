@@ -1039,7 +1039,7 @@ fn secondary(span: &RawSpan) -> Label<FileId> {
 ///    reasonable side of being an alternative.
 fn label_alt(
     span_opt: Option<RawSpan>,
-    alt_term: CompactString,
+    alt_term: &str,
     style: LabelStyle,
     files: &mut Files,
 ) -> Label<FileId> {
@@ -1060,11 +1060,7 @@ fn label_alt(
 /// snippet `alt_term` if the span is `None`.
 ///
 /// See [`label_alt`].
-fn primary_alt(
-    span_opt: Option<RawSpan>,
-    alt_term: CompactString,
-    files: &mut Files,
-) -> Label<FileId> {
+fn primary_alt(span_opt: Option<RawSpan>, alt_term: &str, files: &mut Files) -> Label<FileId> {
     label_alt(span_opt, alt_term, LabelStyle::Primary, files)
 }
 
@@ -1073,14 +1069,14 @@ fn primary_alt(
 ///
 /// See [`label_alt`].
 fn primary_term(term: &RichTerm, files: &mut Files) -> Label<FileId> {
-    primary_alt(term.pos.into_opt(), term.to_compact_string(), files)
+    primary_alt(term.pos.into_opt(), &term.to_compact_string(), files)
 }
 
 /// Create a secondary label from an optional span, or fallback to annotating the alternative
 /// snippet `alt_term` if the span is `None`.
 ///
 /// See [`label_alt`].
-fn secondary_alt(span_opt: TermPos, alt_term: CompactString, files: &mut Files) -> Label<FileId> {
+fn secondary_alt(span_opt: TermPos, alt_term: &str, files: &mut Files) -> Label<FileId> {
     label_alt(span_opt.into_opt(), alt_term, LabelStyle::Secondary, files)
 }
 
@@ -1089,7 +1085,7 @@ fn secondary_alt(span_opt: TermPos, alt_term: CompactString, files: &mut Files) 
 ///
 /// See [`label_alt`].
 fn secondary_term(term: &RichTerm, files: &mut Files) -> Label<FileId> {
-    secondary_alt(term.pos, term.to_compact_string(), files)
+    secondary_alt(term.pos, &term.to_compact_string(), files)
 }
 
 fn cardinal(number: usize) -> CompactString {
@@ -1209,7 +1205,7 @@ impl IntoDiagnostics for EvalError {
                 .with_labels(vec![
                     primary_term(&t, files)
                         .with_message("this term is applied, but it is not a function"),
-                    secondary_alt(pos_opt, format_compact!("({}) ({})", t, arg), files)
+                    secondary_alt(pos_opt, &format_compact!("({}) ({})", t, arg), files)
                         .with_message("applied here"),
                 ])],
             EvalError::FieldMissing {
@@ -1378,12 +1374,8 @@ impl IntoDiagnostics for EvalError {
             }
             EvalError::UnboundIdentifier(ident, span_opt) => vec![Diagnostic::error()
                 .with_message(format!("unbound identifier `{ident}`"))
-                .with_labels(vec![primary_alt(
-                    span_opt.into_opt(),
-                    ident.to_compact_string(),
-                    files,
-                )
-                .with_message("this identifier is unbound")])],
+                .with_labels(vec![primary_alt(span_opt.into_opt(), ident.label(), files)
+                    .with_message("this identifier is unbound")])],
             EvalError::InfiniteRecursion(_call_stack, span_opt) => {
                 let labels = span_opt
                     .as_opt_ref()
@@ -2237,7 +2229,7 @@ impl IntoDiagnostics for TypecheckError {
                 .with_message(format!("unbound type variable `{ident}`"))
                 .with_labels(vec![primary_alt(
                     ident.pos.into_opt(),
-                    ident.to_compact_string(),
+                    ident.label(),
                     files,
                 )
                 .with_message("this type variable is unbound")])
@@ -2588,7 +2580,7 @@ impl IntoDiagnostics for TypecheckError {
                     ])]
             }
             TypecheckError::OrPatternVarsMismatch { var, pos } => {
-                let mut labels = vec![primary_alt(var.pos.into_opt(), var.into_label(), files)
+                let mut labels = vec![primary_alt(var.pos.into_opt(), var.label(), files)
                     .with_message("this variable must occur in all branches")];
 
                 if let Some(span) = pos.into_opt() {
