@@ -879,10 +879,7 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
                 if let Term::Str(s) = &*t {
                     let n = parse_number_sci(s).map_err(|_| {
                         EvalError::Other(
-                            format!(
-                                "number/from_string: invalid number literal `{}`",
-                                s.as_str()
-                            ),
+                            format!("number/from_string: invalid number literal `{}`", s),
                             pos,
                         )
                     })?;

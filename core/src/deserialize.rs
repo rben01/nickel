@@ -1,6 +1,5 @@
 //! Deserialization of an evaluated program to plain Rust types.
 
-use compact_str::CompactString;
 use malachite::{num::conversion::traits::RoundingFrom, rounding_modes::RoundingMode};
 use std::iter::ExactSizeIterator;
 
@@ -57,11 +56,11 @@ impl<'de> serde::Deserializer<'de> for RichTerm {
             Term::Num(v) => visitor.visit_f64(f64::rounding_from(v, RoundingMode::Nearest).0),
             Term::Str(v) => visitor.visit_str(v.as_ref()),
             Term::Enum(v) => visitor.visit_enum(EnumDeserializer {
-                variant: v.into_label(),
+                variant: v.label(),
                 rich_term: None,
             }),
             Term::EnumVariant { tag, arg, .. } => visitor.visit_enum(EnumDeserializer {
-                variant: tag.into_label(),
+                variant: tag.label(),
                 rich_term: Some(arg),
             }),
             Term::Record(record) => visit_record(record.fields, visitor),
@@ -111,8 +110,8 @@ impl<'de> serde::Deserializer<'de> for RichTerm {
         V: Visitor<'de>,
     {
         let (variant, rich_term) = match unwrap_term(self)? {
-            Term::Enum(ident) => (ident.into_label(), None),
-            Term::EnumVariant { tag, arg, .. } => (tag.into_label(), Some(arg)),
+            Term::Enum(ident) => (ident.label(), None),
+            Term::EnumVariant { tag, arg, .. } => (tag.label(), Some(arg)),
             Term::Record(record) => {
                 let mut iter = record.fields.into_iter();
                 let (variant, value) = match iter.next() {
@@ -130,7 +129,7 @@ impl<'de> serde::Deserializer<'de> for RichTerm {
                         occurred: "Record with multiple keys".to_string(),
                     });
                 }
-                (variant.into_label(), value)
+                (variant.label(), value)
             }
             other => {
                 return Err(RustDeserializationError::InvalidType {
@@ -531,7 +530,7 @@ impl<'de> VariantAccess<'de> for VariantDeserializer {
 }
 
 struct EnumDeserializer {
-    variant: CompactString,
+    variant: &'static str,
     rich_term: Option<RichTerm>,
 }
 

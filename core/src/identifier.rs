@@ -40,10 +40,6 @@ impl Ident {
         INTERNER.lookup(self.0)
     }
 
-    pub fn into_label(self) -> CompactString {
-        self.label().to_compact_string()
-    }
-
     /// Create a new fresh identifier. This identifier is unique and is guaranteed not to collide
     /// with any identifier defined before. Generated identifiers start with a special prefix that
     /// can't be used by normal, user-defined identifiers.
@@ -109,8 +105,7 @@ pub struct LocIdent {
 
 impl<'de> serde::Deserialize<'de> for LocIdent {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let s = CompactString::deserialize(deserializer)?;
-        Ok(LocIdent::new(&*s))
+        Ok(LocIdent::new(&CompactString::deserialize(deserializer)?))
     }
 }
 
@@ -150,12 +145,8 @@ impl LocIdent {
     }
 
     /// Return the string representation of this identifier.
-    pub fn label(&self) -> &str {
+    pub fn label(&self) -> &'static str {
         self.ident.label()
-    }
-
-    pub fn into_label(self) -> CompactString {
-        self.label().to_compact_string()
     }
 }
 
@@ -203,7 +194,7 @@ impl fmt::Display for LocIdent {
 
 impl From<LocIdent> for CompactString {
     fn from(ident: LocIdent) -> Self {
-        ident.into_label()
+        ident.label().to_compact_string()
     }
 }
 
@@ -222,13 +213,6 @@ impl AsRef<str> for LocIdent {
 impl<'a> From<&'a str> for LocIdent {
     fn from(s: &'a str) -> Self {
         Self::new(s)
-    }
-}
-
-// necessary for the serde deserialization
-impl From<CompactString> for LocIdent {
-    fn from(s: CompactString) -> Self {
-        Self::new(&*s)
     }
 }
 

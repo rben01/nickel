@@ -51,7 +51,7 @@ pub struct UnknownStdlibModule;
 macro_rules! generate_accessor {
     ($value:ident) => {
         pub fn $value() -> RichTerm {
-            mk_term::var(format_compact!("${}", stringify!($value)))
+            mk_term::var(&*format_compact!("${}", stringify!($value)))
         }
     };
 }
