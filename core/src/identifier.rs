@@ -1,13 +1,14 @@
 //! Define the type of an identifier.
+use compact_str::{CompactString, ToCompactString};
 use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{
     borrow::Borrow,
     fmt::{self, Debug},
     hash::Hash,
 };
 
-use crate::{metrics::increment, position::TermPos, term::string::NickelString};
+use crate::{metrics::increment, position::TermPos};
 
 simple_counter::generate_counter!(GeneratedCounter, usize);
 static INTERNER: Lazy<interner::Interner> = Lazy::new(interner::Interner::new);
@@ -16,9 +17,18 @@ static INTERNER: Lazy<interner::Interner> = Lazy::new(interner::Interner::new);
 //
 // Implementation-wise, this is just a wrapper around interner::Symbol that uses a hard-coded,
 // static `Interner`.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(into = "String", from = "String")]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[serde(from = "CompactString")]
 pub struct Ident(interner::Symbol);
+
+impl serde::Serialize for Ident {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.label().serialize(serializer)
+    }
+}
 
 impl Ident {
     pub fn new(s: impl AsRef<str>) -> Self {
@@ -26,12 +36,12 @@ impl Ident {
     }
 
     /// Return the string representation of this identifier.
-    pub fn label(&self) -> &str {
+    pub fn label(&self) -> &'static str {
         INTERNER.lookup(self.0)
     }
 
-    pub fn into_label(self) -> String {
-        self.label().to_owned()
+    pub fn into_label(self) -> CompactString {
+        self.label().to_compact_string()
     }
 
     /// Create a new fresh identifier. This identifier is unique and is guaranteed not to collide
@@ -82,25 +92,12 @@ impl Ord for Ident {
     }
 }
 
-impl From<Ident> for NickelString {
-    fn from(sym: Ident) -> Self {
-        sym.to_string().into()
-    }
-}
-
 impl<F> From<F> for Ident
 where
-    String: From<F>,
+    F: AsRef<str>,
 {
     fn from(val: F) -> Self {
-        Self(INTERNER.intern(String::from(val)))
-    }
-}
-
-#[allow(clippy::from_over_into)]
-impl Into<String> for Ident {
-    fn into(self) -> String {
-        self.into_label()
+        Self(INTERNER.intern(val))
     }
 }
 
@@ -108,12 +105,24 @@ impl Into<String> for Ident {
 ///
 /// The location is ignored for equality comparison and hashing; it's mainly
 /// intended for error messages.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-#[serde(into = "String", from = "String")]
+#[derive(Clone, Copy, Debug)]
 pub struct LocIdent {
     ident: Ident,
     pub pos: TermPos,
     generated: bool,
+}
+
+impl<'de> serde::Deserialize<'de> for LocIdent {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = CompactString::deserialize(deserializer)?;
+        Ok(LocIdent::new(&*s))
+    }
+}
+
+impl serde::Serialize for LocIdent {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.label().serialize(serializer)
+    }
 }
 
 impl LocIdent {
@@ -150,8 +159,8 @@ impl LocIdent {
         self.ident.label()
     }
 
-    pub fn into_label(self) -> String {
-        self.label().to_owned()
+    pub fn into_label(self) -> CompactString {
+        self.label().to_compact_string()
     }
 }
 
@@ -197,30 +206,9 @@ impl fmt::Display for LocIdent {
     }
 }
 
-impl<F> From<F> for LocIdent
-where
-    String: From<F>,
-{
-    fn from(val: F) -> Self {
-        Self::new(String::from(val))
-    }
-}
-
-// False-positive Clippy error: if we apply this suggestion,
-// we end up with an implementation of `From<Ident> for String`.
-// Then setting `F = Ident` in the implementation above gives
-// `From<Ident> for Ident` which is incoherent with the
-// blanket implementation of `From<T> for T`.
-#[allow(clippy::from_over_into)]
-impl Into<String> for LocIdent {
-    fn into(self) -> String {
-        self.into_label()
-    }
-}
-
-impl From<LocIdent> for NickelString {
-    fn from(id: LocIdent) -> Self {
-        id.to_string().into()
+impl From<LocIdent> for CompactString {
+    fn from(ident: LocIdent) -> Self {
+        ident.into_label()
     }
 }
 
@@ -233,6 +221,19 @@ impl LocIdent {
 impl AsRef<str> for LocIdent {
     fn as_ref(&self) -> &str {
         self.label()
+    }
+}
+
+impl<'a> From<&'a str> for LocIdent {
+    fn from(s: &'a str) -> Self {
+        Self::new(s)
+    }
+}
+
+// necessary for the serde deserialization
+impl From<CompactString> for LocIdent {
+    fn from(s: CompactString) -> Self {
+        Self::new(&*s)
     }
 }
 

@@ -7,6 +7,7 @@ pub use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle};
 
 use codespan_reporting::files::Files as _;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream, WriteColor};
+use compact_str::{format_compact, CompactString, ToCompactString};
 use lalrpop_util::ErrorRecovery;
 use malachite::num::conversion::traits::ToSci;
 
@@ -1038,7 +1039,7 @@ fn secondary(span: &RawSpan) -> Label<FileId> {
 ///    reasonable side of being an alternative.
 fn label_alt(
     span_opt: Option<RawSpan>,
-    alt_term: String,
+    alt_term: CompactString,
     style: LabelStyle,
     files: &mut Files,
 ) -> Label<FileId> {
@@ -1059,7 +1060,11 @@ fn label_alt(
 /// snippet `alt_term` if the span is `None`.
 ///
 /// See [`label_alt`].
-fn primary_alt(span_opt: Option<RawSpan>, alt_term: String, files: &mut Files) -> Label<FileId> {
+fn primary_alt(
+    span_opt: Option<RawSpan>,
+    alt_term: CompactString,
+    files: &mut Files,
+) -> Label<FileId> {
     label_alt(span_opt, alt_term, LabelStyle::Primary, files)
 }
 
@@ -1068,14 +1073,14 @@ fn primary_alt(span_opt: Option<RawSpan>, alt_term: String, files: &mut Files) -
 ///
 /// See [`label_alt`].
 fn primary_term(term: &RichTerm, files: &mut Files) -> Label<FileId> {
-    primary_alt(term.pos.into_opt(), term.to_string(), files)
+    primary_alt(term.pos.into_opt(), term.to_compact_string(), files)
 }
 
 /// Create a secondary label from an optional span, or fallback to annotating the alternative
 /// snippet `alt_term` if the span is `None`.
 ///
 /// See [`label_alt`].
-fn secondary_alt(span_opt: TermPos, alt_term: String, files: &mut Files) -> Label<FileId> {
+fn secondary_alt(span_opt: TermPos, alt_term: CompactString, files: &mut Files) -> Label<FileId> {
     label_alt(span_opt.into_opt(), alt_term, LabelStyle::Secondary, files)
 }
 
@@ -1084,10 +1089,10 @@ fn secondary_alt(span_opt: TermPos, alt_term: String, files: &mut Files) -> Labe
 ///
 /// See [`label_alt`].
 fn secondary_term(term: &RichTerm, files: &mut Files) -> Label<FileId> {
-    secondary_alt(term.pos, term.to_string(), files)
+    secondary_alt(term.pos, term.to_compact_string(), files)
 }
 
-fn cardinal(number: usize) -> String {
+fn cardinal(number: usize) -> CompactString {
     let suffix = if number % 10 == 1 {
         "st"
     } else if number % 10 == 2 {
@@ -1097,7 +1102,7 @@ fn cardinal(number: usize) -> String {
     } else {
         "th"
     };
-    format!("{number}{suffix}")
+    format_compact!("{number}{suffix}")
 }
 
 impl IntoDiagnostics for Error {
@@ -1204,7 +1209,7 @@ impl IntoDiagnostics for EvalError {
                 .with_labels(vec![
                     primary_term(&t, files)
                         .with_message("this term is applied, but it is not a function"),
-                    secondary_alt(pos_opt, format!("({}) ({})", t, arg), files)
+                    secondary_alt(pos_opt, format_compact!("({}) ({})", t, arg), files)
                         .with_message("applied here"),
                 ])],
             EvalError::FieldMissing {
@@ -1375,7 +1380,7 @@ impl IntoDiagnostics for EvalError {
                 .with_message(format!("unbound identifier `{ident}`"))
                 .with_labels(vec![primary_alt(
                     span_opt.into_opt(),
-                    ident.to_string(),
+                    ident.to_compact_string(),
                     files,
                 )
                 .with_message("this identifier is unbound")])],
@@ -2232,7 +2237,7 @@ impl IntoDiagnostics for TypecheckError {
                 .with_message(format!("unbound type variable `{ident}`"))
                 .with_labels(vec![primary_alt(
                     ident.pos.into_opt(),
-                    ident.to_string(),
+                    ident.to_compact_string(),
                     files,
                 )
                 .with_message("this type variable is unbound")])

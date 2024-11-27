@@ -1,6 +1,7 @@
 //! Load the Nickel standard library in strings at compile-time.
 use crate::term::make as mk_term;
 use crate::term::RichTerm;
+use compact_str::format_compact;
 
 /// This is an array containing all the Nickel standard library modules. Currently, this is one
 /// monolithic `std` module, and the definitions of `internals` living at the toplevel.
@@ -50,7 +51,7 @@ pub struct UnknownStdlibModule;
 macro_rules! generate_accessor {
     ($value:ident) => {
         pub fn $value() -> RichTerm {
-            mk_term::var(format!("${}", stringify!($value)))
+            mk_term::var(format_compact!("${}", stringify!($value)))
         }
     };
 }

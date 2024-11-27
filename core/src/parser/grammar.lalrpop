@@ -1119,7 +1119,7 @@ StringEnumTag = DelimitedStaticString<"'\"", "\"">;
 
 EnumTag: LocIdent = {
   "raw enum tag" => <>.into(),
-  StringEnumTag => <>.into(),
+  <StringEnumTag> => <>.as_str().into(),
 };
 
 ChunkLiteralPart: ChunkLiteralPart = {
