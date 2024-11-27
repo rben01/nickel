@@ -911,7 +911,7 @@ impl Subcontract for Type {
                             Array::from_iter(
                                 excluded
                                     .iter()
-                                    .map(|id| Term::Str(NickelString::from(*id)).into()),
+                                    .map(|id| Term::Str(NickelString::from(id)).into()),
                             ),
                             Default::default(),
                         )
@@ -1438,7 +1438,7 @@ impl RecordRows {
                                     Array::from_iter(
                                         excluded
                                             .iter()
-                                            .map(|id| Term::Str(NickelString::from(*id)).into()),
+                                            .map(|id| Term::Str(NickelString::from(id)).into()),
                                     ),
                                     Default::default(),
                                 )

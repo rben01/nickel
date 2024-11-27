@@ -1966,7 +1966,7 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
                                     let term = element.term.into_owned();
 
                                     if let Term::Str(s) = term {
-                                        Ok(s.into_inner())
+                                        Ok(s.into_inner().to_string())
                                     } else {
                                         mk_type_error!(
                                             "String (notes)",
@@ -2120,7 +2120,7 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
                 Term::Str(field) => match_sharedterm!(match (t2) {
                     Term::Lbl(l) => {
                         let mut l = l;
-                        l.path.push(ty_path::Elem::Field(field.into_inner().into()));
+                        l.path.push(ty_path::Elem::Field(field.as_ref().into()));
                         Ok(Closure::atomic_closure(RichTerm::new(
                             Term::Lbl(l),
                             pos_op_inh,
@@ -2285,7 +2285,7 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
                                     let record = RecordData { fields, ..record };
 
                                     Err(EvalError::FieldMissing {
-                                        id: id.into(),
+                                        id: id.as_str().into(),
                                         field_names: record.field_names(op_kind),
                                         operator: String::from("record/remove"),
                                         pos_record: pos2,
@@ -2312,7 +2312,7 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
                     if let Term::Record(record) = &*t2 {
                         Ok(Closure::atomic_closure(RichTerm::new(
                             Term::Bool(matches!(
-                                record.fields.get(&LocIdent::from(id.into_inner())),
+                                record.fields.get(&LocIdent::from(id.as_str())),
                                 Some(field) if matches!(op_kind, RecordOpKind::ConsiderAllFields) || !field.is_empty_optional()
                             )),
                             pos_op_inh,
@@ -2328,7 +2328,7 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
                     if let Term::Record(record) = &*t2 {
                         Ok(Closure::atomic_closure(RichTerm::new(
                             Term::Bool(matches!(
-                                record.fields.get(&LocIdent::from(id.into_inner())),
+                                record.fields.get(&LocIdent::from(id.as_str())),
                                 Some(field @ Field { value: Some(_), ..}) if matches!(op_kind, RecordOpKind::ConsiderAllFields) || !field.is_empty_optional()
                             )),
                             pos_op_inh,
@@ -2820,7 +2820,7 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
                         let term = element.term.into_owned();
 
                         if let Term::Str(s) = term {
-                            Ok(s.into_inner())
+                            Ok(s.into_inner().to_string())
                         } else {
                             mk_type_error!("String", 1, term.into(), element.pos)
                         }

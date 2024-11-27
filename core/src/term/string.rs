@@ -1,5 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
+use compact_str::CompactString;
 use malachite::Rational;
 use serde::{Deserialize, Serialize};
 use unicode_segmentation::UnicodeSegmentation;
@@ -11,34 +12,28 @@ use crate::identifier::{Ident, LocIdent};
 /// methods implementing custom logic (in particular, functions which
 /// avoid ever breaking up Unicode extended grapheme clusters.)
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct NickelString(String);
+pub struct NickelString(CompactString);
 
 // Conversions to & from String-like things.
-
 impl<S> From<S> for NickelString
 where
-    String: From<S>,
+    CompactString: From<S>,
 {
     fn from(inner: S) -> Self {
         Self(inner.into())
     }
 }
 
-impl From<&NickelString> for String {
+impl From<&Ident> for NickelString {
+    fn from(ident: &Ident) -> Self {
+        use compact_str::ToCompactString;
+        Self(ident.to_compact_string())
+    }
+}
+
+impl From<&NickelString> for LocIdent {
     fn from(s: &NickelString) -> Self {
-        s.clone().into_inner()
-    }
-}
-
-impl From<NickelString> for Ident {
-    fn from(s: NickelString) -> Self {
-        Ident::from(s.0)
-    }
-}
-
-impl From<NickelString> for LocIdent {
-    fn from(s: NickelString) -> Self {
-        LocIdent::from(s.0)
+        LocIdent::from(s.as_str())
     }
 }
 
@@ -46,15 +41,15 @@ impl From<NickelString> for LocIdent {
 // Rust `String`s.
 
 impl Deref for NickelString {
-    type Target = String;
+    type Target = CompactString;
 
-    fn deref(&self) -> &String {
+    fn deref(&self) -> &CompactString {
         &self.0
     }
 }
 
 impl DerefMut for NickelString {
-    fn deref_mut(&mut self) -> &mut String {
+    fn deref_mut(&mut self) -> &mut CompactString {
         &mut self.0
     }
 }
@@ -342,8 +337,8 @@ impl NickelString {
         })
     }
 
-    /// Consumes `self`, returning the Rust `String`.
-    pub fn into_inner(self) -> String {
+    /// Consumes `self`, returning the `CompactString`.
+    pub fn into_inner(self) -> CompactString {
         self.0
     }
 }

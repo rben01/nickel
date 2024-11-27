@@ -1,5 +1,6 @@
 //! Deserialization of an evaluated program to plain Rust types.
 
+use compact_str::CompactString;
 use malachite::{num::conversion::traits::RoundingFrom, rounding_modes::RoundingMode};
 use std::iter::ExactSizeIterator;
 
@@ -54,7 +55,7 @@ impl<'de> serde::Deserializer<'de> for RichTerm {
             Term::Null => visitor.visit_unit(),
             Term::Bool(v) => visitor.visit_bool(v),
             Term::Num(v) => visitor.visit_f64(f64::rounding_from(v, RoundingMode::Nearest).0),
-            Term::Str(v) => visitor.visit_string(v.into_inner()),
+            Term::Str(v) => visitor.visit_str(v.as_ref()),
             Term::Enum(v) => visitor.visit_enum(EnumDeserializer {
                 variant: v.into_label(),
                 rich_term: None,
@@ -190,7 +191,7 @@ impl<'de> serde::Deserializer<'de> for RichTerm {
         V: Visitor<'de>,
     {
         match unwrap_term(self)? {
-            Term::Str(v) => visitor.visit_string(v.into_inner()),
+            Term::Str(v) => visitor.visit_str(v.as_ref()),
             other => Err(RustDeserializationError::InvalidType {
                 expected: "Str".to_string(),
                 occurred: other.type_of().unwrap_or_else(|| "Other".to_string()),
@@ -212,7 +213,7 @@ impl<'de> serde::Deserializer<'de> for RichTerm {
         V: Visitor<'de>,
     {
         match unwrap_term(self)? {
-            Term::Str(v) => visitor.visit_string(v.into_inner()),
+            Term::Str(v) => visitor.visit_str(v.as_ref()),
             Term::Array(v, _) => visit_array(v, visitor),
             other => Err(RustDeserializationError::InvalidType {
                 expected: "Str or Array".to_string(),
@@ -530,7 +531,7 @@ impl<'de> VariantAccess<'de> for VariantDeserializer {
 }
 
 struct EnumDeserializer {
-    variant: String,
+    variant: CompactString,
     rich_term: Option<RichTerm>,
 }
 

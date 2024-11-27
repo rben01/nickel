@@ -44,6 +44,7 @@ clap = { workspace = true, features = ["derive"], optional = true }
 codespan.workspace = true
 codespan-reporting.workspace = true
 colorchoice.workspace = true
+compact_str.workspace = true
 cxx = { workspace = true, optional = true }
 logos.workspace = true
 nickel-lang-vector.workspace = true
