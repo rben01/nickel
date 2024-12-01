@@ -6,10 +6,11 @@ use super::operation::OperationCont;
 use crate::eval::{Closure, Environment};
 use crate::position::TermPos;
 use crate::term::{BindingType, RichTerm, StrChunk};
+use compact_str::CompactString;
 
 pub struct StrAccData {
     /// The accumulator.
-    pub acc: String,
+    pub acc: CompactString,
     /// The common environment of chunks.
     pub env: Environment,
     /// The indentation level of the chunk currently being evaluated.

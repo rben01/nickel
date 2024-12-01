@@ -105,6 +105,7 @@ pub mod operation;
 pub mod stack;
 
 use callstack::*;
+use compact_str::CompactString;
 use operation::OperationCont;
 use stack::{Stack, StrAccData};
 
@@ -696,7 +697,7 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
 
                             self.stack.push_str_chunks(chunks_iter);
                             self.stack.push_str_acc(StrAccData {
-                                acc: String::new(),
+                                acc: CompactString::default(),
                                 env: env.clone(),
                                 curr_indent: indent,
                                 curr_pos: arg.pos,
