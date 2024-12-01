@@ -25,6 +25,8 @@
 //! resulting metadata is the result of merging the two original field's metadata. The semantics
 //! depend on each metadata.
 
+use compact_str::format_compact;
+
 use super::*;
 use crate::{
     closurize::Closurize,
@@ -280,8 +282,10 @@ pub fn merge<C: Cache>(
 
             match mode {
                 MergeMode::Contract(_) if !r2.attrs.open && !left.is_empty() => {
-                    let fields: Vec<String> =
-                        left.keys().map(|field| format!("`{field}`")).collect();
+                    let fields: Vec<_> = left
+                        .keys()
+                        .map(|field| format_compact!("`{field}`"))
+                        .collect();
                     let plural = if fields.len() == 1 { "" } else { "s" };
                     let fields_list = fields.join(", ");
 
