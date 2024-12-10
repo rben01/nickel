@@ -11,6 +11,7 @@ use crate::term::{
 };
 use crate::{term, typ::*};
 
+use compact_str::ToCompactString;
 use malachite::num::{basic::traits::Zero, conversion::traits::ToSci};
 use once_cell::sync::Lazy;
 use pretty::docs;
@@ -484,13 +485,16 @@ impl Allocator {
             if with_doc {
                 metadata
                     .doc
-                    .clone()
+                    .as_ref()
                     .map(|doc| {
                         docs![
                             self,
                             self.line(),
                             "| doc ",
-                            self.chunks(&[StrChunk::Literal(doc)], StringRenderStyle::Multiline),
+                            self.chunks(
+                                &[StrChunk::Literal(doc.to_compact_string())],
+                                StringRenderStyle::Multiline
+                            ),
                         ]
                     })
                     .unwrap_or_else(|| self.nil())

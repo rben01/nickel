@@ -1,5 +1,6 @@
 //! Various helpers and companion code for the parser are put here to keep the grammar definition
 //! uncluttered.
+use compact_str::CompactString;
 use indexmap::map::Entry;
 use std::ffi::OsString;
 use std::rc::Rc;
@@ -857,7 +858,7 @@ pub fn strip_indent(mut chunks: Vec<StrChunk<RichTerm>>) -> Vec<StrChunk<RichTer
     for (index, chunk) in chunks.iter_mut().enumerate() {
         match chunk {
             StrChunk::Literal(ref mut s) => {
-                let mut buffer = String::new();
+                let mut buffer = CompactString::with_capacity(s.len());
                 for c in s.chars() {
                     match c {
                         ' ' | '\t' if start_line && current < min => current += 1,
@@ -879,6 +880,9 @@ pub fn strip_indent(mut chunks: Vec<StrChunk<RichTerm>>) -> Vec<StrChunk<RichTer
                     }
                 }
 
+                let mut left = 0;
+                let mut right = buffer.len();
+
                 // Strip the first line, if it is only whitespace characters
                 if index == 0 {
                     if let Some(first_index) = buffer.find('\n') {
@@ -887,7 +891,7 @@ pub fn strip_indent(mut chunks: Vec<StrChunk<RichTerm>>) -> Vec<StrChunk<RichTer
                                 .iter()
                                 .all(|c| *c == b' ' || *c == b'\t')
                         {
-                            buffer = String::from(&buffer[(first_index + 1)..]);
+                            left = first_index + 1;
                         }
                     }
                 }
@@ -900,12 +904,16 @@ pub fn strip_indent(mut chunks: Vec<StrChunk<RichTerm>>) -> Vec<StrChunk<RichTer
                                 .iter()
                                 .all(|c| *c == b' ' || *c == b'\t')
                         {
-                            buffer.truncate(last_index);
+                            right = last_index;
                         }
                     }
                 }
 
-                *s = buffer;
+                if left + buffer.len() != right {
+                    *s = CompactString::from(&buffer[left..right]);
+                } else {
+                    *s = buffer;
+                }
             }
             StrChunk::Expr(_, ref mut indent) => {
                 if start_line {
