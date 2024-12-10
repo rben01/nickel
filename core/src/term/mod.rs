@@ -15,6 +15,7 @@ pub mod record;
 pub mod string;
 
 use array::{Array, ArrayAttrs};
+use compact_str::CompactString;
 use pattern::Pattern;
 use record::{Field, FieldDeps, FieldMetadata, RecordData, RecordDeps};
 use smallvec::SmallVec;
@@ -973,7 +974,7 @@ impl Traverse<RichTerm> for TypeAnnotation {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum StrChunk<E> {
     /// A string literal.
-    Literal(String),
+    Literal(CompactString),
 
     /// An interpolated expression.
     Expr(
