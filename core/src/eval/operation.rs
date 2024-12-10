@@ -755,16 +755,16 @@ impl<R: ImportResolver, C: Cache> VirtualMachine<R, C> {
                 } = self.stack.pop_str_acc().unwrap();
 
                 if let Term::Str(s) = &*t {
-                    let s = if indent != 0 {
-                        let indent_str: String = std::iter::once('\n')
-                            .chain((0..indent).map(|_| ' '))
-                            .collect();
-                        s.as_str().replace('\n', &indent_str).into()
-                    } else {
-                        s.clone()
-                    };
+                    acc.reserve(s.as_str().len());
 
-                    acc.push_str(&s);
+                    for c in s.as_str().chars() {
+                        acc.push(c);
+                        if c == '\n' {
+                            for _ in 0..indent {
+                                acc.push(' ');
+                            }
+                        }
+                    }
 
                     let mut next_opt = self.stack.pop_str_chunk();
 
