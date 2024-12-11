@@ -71,6 +71,8 @@ use crate::{
     label::MergeKind,
 };
 
+use compact_str::{CompactString, ToCompactString};
+
 use malachite::num::basic::traits::Zero;
 
 grammar<'input, 'ast, 'err, 'wcard>(
@@ -1012,11 +1014,11 @@ StringChunks: Node<'ast> = {
             "Fatal parser error: a string starting with {start:?} should never be closed by {end:?}"
         );
 
-        let mut chunks: Vec<StringChunk<Ast<'ast>>> = fst.into_iter()
-            .map(StringChunk::Literal)
+        let chunks: Vec<StrChunk<RichTerm>> = fst.into_iter()
+            .map(|s| StringChunk::Literal(s.into()))
             .chain(chunks.into_iter()
                 .map(|(mut es, s)| {
-                    es.push(StringChunk::Literal(s));
+                    es.push(StringChunk::Literal(s.into()));
                     es
                 })
                 .flatten())
@@ -1090,14 +1092,14 @@ StandardStaticString = DelimitedStaticString<"\"", "\"">;
 // A static string using the multiline string syntax.
 MultilineStaticString: String = DelimitedStaticString<"m%\"","\"%"> => {
     // strip the common indentation prefix
-    let mut chunks = vec![StringChunk::Literal(<>)];
+    let mut chunks = vec![StringChunk::Literal(CompactString::from_string_buffer(<>))];
     strip_indent(&mut chunks);
 
     // unwrap(): we crated the vector just above with exactly one element, and
     // `strip_indent` doesn't change the size of its vector argument, so there's
     // still exactly one element
     match chunks.pop().unwrap() {
-        StringChunk::Literal(s) => s,
+        StringChunk::Literal(s) => s.into_string(),
         // unreachable: we built the only element as a `StringChunk::Literal`,
         // and `strip_indent` doesn't change the nature of chunks, so the only
         // element can't be anything else (an expression)
