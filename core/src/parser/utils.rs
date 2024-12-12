@@ -1,7 +1,6 @@
 //! Various helpers and companion code for the parser are put here to keep the grammar definition
 //! uncluttered.
 use compact_str::CompactString;
-use indexmap::map::Entry;
 use std::{
     ffi::OsString,
     iter,
@@ -184,7 +183,7 @@ impl EtaExpand for InfixOp {
             }
             InfixOp(op) => {
                 let vars: Vec<_> = (0..op.arity())
-                    .map(|i| LocIdent::from(format!("x{i}")))
+                    .map(|i| LocIdent::from(&format!("x{i}")))
                     .collect();
                 let fun_args: Vec<_> = vars.iter().map(|arg| pattern::Pattern::any(*arg)).collect();
                 let args: Vec<_> = vars.into_iter().map(builder::var).collect();

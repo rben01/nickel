@@ -48,9 +48,11 @@ impl<'ast> FieldPathElem<'ast> {
     pub fn try_as_ident(&self) -> Option<LocIdent> {
         match self {
             FieldPathElem::Ident(ident) => Some(*ident),
-            FieldPathElem::Expr(expr) => {
-                expr.node.try_str_chunk_as_static_str().map(LocIdent::from)
-            }
+            FieldPathElem::Expr(expr) => expr
+                .node
+                .try_str_chunk_as_static_str()
+                .as_deref()
+                .map(LocIdent::from),
         }
     }
 }
